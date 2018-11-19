@@ -6,7 +6,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "webpack",
-    "start": "webpack-dev-server -d --host csvrproject.ml"
+    "start": "webpack-dev-server -d --host localhost"
   },
   "author": "Eric Cambel",
   "license": "ISC",
