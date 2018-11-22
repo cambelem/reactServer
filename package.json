@@ -13,6 +13,8 @@
   "dependencies": {
     "@types/lodash": "^4.14.117",
     "lodash": "^4.17.11",
+    "mqtt-react": "0.0.3",
+    "object.omit": "^3.0.0",
     "react": "^16.5.2",
     "react-diagram": "0.0.2",
     "react-dom": "^16.5.2"
