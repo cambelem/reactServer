@@ -3,32 +3,48 @@ import { Connector } from 'mqtt-react';
 //import PostMqtt from './components/PostMessage.jsx';
 //import SubMqtt from './components/MessageList.jsx';
 
-import _MessageContainer from './components/MessageContainer.jsx';
-import {subscribe} from 'mqtt-react';
+// import _MessageContainer from './components/MessageContainer.jsx';
+import Message from './components/Message'
+import AddRemoveTopics from './components/AddRemoveTopics'
+
+// import {subscribe} from 'mqtt-react';
+import mqtt from 'mqtt';
+
+// client.on('message', function(){
+//   client.subscribe("webClient");
+// })
 
 export default class View extends Component {
   constructor(){
     super()
-    this.state = {msgArray: [],
+    this.state = {activeTopic: [],
+                  inactiveTopic: [],
                   topicInput: "",
-                  subTextBox: ""}
+                  subTextBox: "",
+                  client: mqtt.connect('ws://localhost:9001')}
 
     this.handleTopic = this.handleTopic.bind(this)
     this.addTopic = this.addTopic.bind(this)
     this.appendSubText = this.appendSubText.bind(this)
-    this.testBtn = this.testBtn.bind(this)
   }
 
+
   handleTopic(e) {
-    console.log(e.target.value)
     this.setState({topicInput: e.target.value})
   }
 
   addTopic() {
-    let copy = this.state.msgArray
+    let copy = this.state.activeTopic
+    console.log(this.state.topicInput);
+    if (copy.includes(this.state.topicInput) ||
+        this.state.inactiveTopic.includes(this.state.topicInput) ||
+        this.state.topicInput === "" || this.state.topicInput === " "){
+      return
+    }
+
     copy.push(this.state.topicInput)
-    this.setState({msgArray: copy, topicInput: ""})
-    
+    this.setState({activeTopic: copy, topicInput: ""})
+    this.state.client.subscribe(this.state.topicInput);
   }
 
   appendSubText(data) {
@@ -41,56 +57,15 @@ export default class View extends Component {
     }
   }
 
-  testBtn(e) {
-    if (this.state.subTextBox === ""){
-      this.setState({subTextBox: e.target.value})
-    } else {
-      let copy = this.state.subTextBox
-      let newline = String.fromCharCode(13, 10)
-      this.setState({subTextBox: copy.concat(newline, e.target.value)})
-    }
-  }
-
   render(){
-    const topicInputBox = <div>
-                          <div className="row">
-                            <div className="col-12">
-                              <label> Please add a topic  below: </label>
-                            </div>
-                          </div>
-                          <div className="row">
-                          <div className="input-group mb-3 col-6">
-                            <input className="form-control" type="text" onChange={this.handleTopic} />
-                            <div className="input-group-append">
-                              <button className="btn btn-primary" onClick={this.addTopic}> Add Topic </button>
-                            </div>
-                          </div>
-                          </div>
-                          </div>
-
-    //let msgArray = ["webClient", "sensor"]
     let message
-    let subText
-    let test
-    if (this.state.msgArray.length !== 0){
-      console.log(this.state.msgArray)
-      message = this.state.msgArray.map( topicName => {
-                let Container = subscribe({topic: topicName})(_MessageContainer)
- 
-                return (
-                  <Connector key={topicName} mqttProps="ws://localhost:9001"> 
-                    <Container key={topicName} appendSubText={this.appendSubText} />
-                  </Connector>
-                )
-              }
-            )
-      subText = <textarea className="form-control" id="subscriberText" rows="10" readOnly value={this.state.subTextBox}></textarea>
-      //test = <button className="btn btn-primary" onClick={this.testBtn} value="test" >Add Test</button>
+
+    if (this.state.activeTopic.length !== 0){
+      message = <Message client={this.state.client} appendSubText={this.appendSubText} />
     } else {
       message = "No subscribers available, please add one below.."
-      let subText = null 
-      //let test = null
     }
+
     return(
       <div className="App container">
         <div className="row">
@@ -99,13 +74,36 @@ export default class View extends Component {
           </div>
         </div>
 
+        <br />
+
+        <div className="row">
+          <div className="col-6">
+            <textarea className="form-control" id="subscriberText" rows="10"
+              readOnly value={this.state.subTextBox} />
+          </div>
+        </div>
+
+        <br />
         {message}
-        {subText}
         <br />
         <br />
 
-        {topicInputBox}
+        <AddRemoveTopics activeTopics={this.state.activeTopic}/>
 
+        <div className="row">
+          <div className="col-12">
+            <label> Please add a topic  below: </label>
+          </div>
+        </div>
+
+        <div className="row">
+          <div className="input-group mb-3 col-6">
+            <input className="form-control" type="text" onChange={this.handleTopic} value={this.state.topicInput}/>
+            <div className="input-group-append">
+              <button className="btn btn-primary" onClick={this.addTopic}> Subscribe To Topic </button>
+            </div>
+          </div>
+        </div>
       </div>
     )
   }
