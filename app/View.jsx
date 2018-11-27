@@ -1,5 +1,5 @@
 import React, { Component } from "react";
-import { Connector } from 'mqtt-react';
+//import { Connector } from 'mqtt-react';
 //import PostMqtt from './components/PostMessage.jsx';
 //import SubMqtt from './components/MessageList.jsx';
 
@@ -63,7 +63,11 @@ export default class View extends Component {
     if (this.state.activeTopic.length !== 0){
       message = <Message client={this.state.client} appendSubText={this.appendSubText} />
     } else {
-      message = "No subscribers available, please add one below.."
+      message = <div className="d-flex justify-content-center">
+                  No subscribers available, please add one below..
+                </div>
+
+
     }
 
     return(
@@ -81,22 +85,40 @@ export default class View extends Component {
             <textarea className="form-control" id="subscriberText" rows="10"
               readOnly value={this.state.subTextBox} />
           </div>
+
+          <div className="col-6">
+            <textarea className="form-control" id="subscriberText" rows="10"
+              readOnly value={this.state.subTextBox} />
+          </div>
         </div>
 
         <br />
         {message}
-        <br />
-        <br />
+
 
         <AddRemoveTopics activeTopics={this.state.activeTopic}/>
+        <br />
 
         <div className="row">
-          <div className="col-12">
-            <label> Please add a topic  below: </label>
+          <div className="col-6">
+            <label> Send a message below: </label>
           </div>
-        </div>
-
-        <div className="row">
+          <div className="col-6">
+            <label> Add a topic: </label>
+          </div>
+          <div className="input-group mb-3 col-6">
+            <div className="input-group-prepend">
+              <button className="btn btn-outline-secondary dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Topic</button>
+              <div className="dropdown-menu">
+                <a className="dropdown-item" href="#">Action</a>
+                <a className="dropdown-item" href="#">Action2</a>
+              </div>
+            </div>
+            <input className="form-control" type="text" onChange={this.handleTopic} value={this.state.topicInput}/>
+            <div className="input-group-append">
+              <button className="btn btn-primary" onClick={this.addTopic}> Send </button>
+            </div>
+          </div>
           <div className="input-group mb-3 col-6">
             <input className="form-control" type="text" onChange={this.handleTopic} value={this.state.topicInput}/>
             <div className="input-group-append">
