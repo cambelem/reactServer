@@ -4,7 +4,7 @@ import React, { Component } from "react";
 //import SubMqtt from './components/MessageList.jsx';
 
 // import _MessageContainer from './components/MessageContainer.jsx';
-import Message from './components/Message'
+import StartMessage from './components/StartMessage'
 import AddRemoveTopics from './components/AddRemoveTopics'
 
 // import {subscribe} from 'mqtt-react';
@@ -20,12 +20,23 @@ export default class View extends Component {
     this.state = {activeTopic: [],
                   inactiveTopic: [],
                   topicInput: "",
+                  msgInput: "",
                   subTextBox: "",
+                  pubTextBox: "",
+                  ddTopic: "Topic",
                   client: mqtt.connect('ws://localhost:9001')}
 
     this.handleTopic = this.handleTopic.bind(this)
+    this.handleMsg = this.handleMsg.bind(this)
     this.addTopic = this.addTopic.bind(this)
     this.appendSubText = this.appendSubText.bind(this)
+    this.addMsg = this.addMsg.bind(this)
+    this.handleTopicHeader = this.handleTopicHeader.bind(this)
+
+    this.handleInactive = this.handleInactive.bind(this)
+    this.handleActive = this.handleActive.bind(this)
+    this.handleMoveAllInactive = this.handleMoveAllInactive.bind(this)
+    this.handleMoveAllActive = this.handleMoveAllActive.bind(this)
   }
 
 
@@ -33,9 +44,12 @@ export default class View extends Component {
     this.setState({topicInput: e.target.value})
   }
 
+  handleMsg(e) {
+    this.setState({msgInput: e.target.value})
+  }
+
   addTopic() {
     let copy = this.state.activeTopic
-    console.log(this.state.topicInput);
     if (copy.includes(this.state.topicInput) ||
         this.state.inactiveTopic.includes(this.state.topicInput) ||
         this.state.topicInput === "" || this.state.topicInput === " "){
@@ -57,18 +71,117 @@ export default class View extends Component {
     }
   }
 
-  render(){
-    let message
+  appendPubText() {
+    let str = "date: " + Date.now() + " topic: " + this.state.ddTopic + " - " + this.state.msgInput
+    if (this.state.pubTextBox === ""){
+      this.setState({pubTextBox: str})
+    } else {
+      let copy = this.state.pubTextBox
+      let newline = String.fromCharCode(13, 10)
+      this.setState({pubTextBox: copy.concat(newline, str)})
+    }
+  }
 
-    if (this.state.activeTopic.length !== 0){
-      message = <Message client={this.state.client} appendSubText={this.appendSubText} />
+  addMsg(){
+    this.state.client.publish(this.state.ddTopic, this.state.msgInput)
+    this.appendPubText()
+    this.setState({msgInput: ""})
+  }
+
+  handleTopicHeader(e){
+    this.setState({ddTopic: e.target.value})
+  }
+
+
+  handleInactive(topics){
+    let self = this
+    var value = [], index;
+    let act = self.state.activeTopic
+    let inact = self.state.inactiveTopic.concat(topics)
+    for (var i = 0, l = topics.length; i < l; i++) {
+      index = act.indexOf(topics[i]);
+      if (index > -1) {
+        act.splice(index, 1);
+      }
+    }
+
+    this.setState({activeTopic: act,
+                  inactiveTopic: inact}, () => {
+
+                  topics.map( function(topicName) {
+                            self.state.client.unsubscribe(topicName)
+                          });
+                  })
+  }
+
+  handleActive(topics){
+    let self = this
+    var value = [], index;
+    let act = self.state.activeTopic.concat(topics)
+    let inact = self.state.inactiveTopic
+    for (var i = 0, l = topics.length; i < l; i++) {
+      index = inact.indexOf(topics[i]);
+      if (index > -1) {
+        inact.splice(index, 1);
+      }
+    }
+
+    this.setState({activeTopic: act,
+                  inactiveTopic: inact}, () => {
+
+                  topics.map( function(topicName) {
+                            self.state.client.subscribe(topicName)
+                          });
+                  })
+  }
+
+  handleMoveAllInactive(){
+    let self = this
+    let inact = this.state.inactiveTopic.concat(this.state.activeTopic)
+    this.setState({activeTopic: [],
+                  inactiveTopic: inact}, () => {
+
+                  self.state.inactiveTopic.map( function(topicName) {
+                            self.state.client.unsubscribe(topicName)
+                          });
+                  })
+
+
+  }
+
+  handleMoveAllActive(){
+    let self = this
+    let act = this.state.activeTopic.concat(this.state.inactiveTopic)
+    this.setState({activeTopic: act,
+                  inactiveTopic: []}, () => {
+
+                    self.state.activeTopic.map( function(topicName) {
+                              self.state.client.subscribe(topicName)
+                            });
+                  })
+  }
+
+  render(){
+    let message, ddItems
+
+    if (this.state.activeTopic.length !== 0 || this.state.inactiveTopic.length !== 0){
+      let self = this
+      message = <StartMessage client={this.state.client} appendSubText={this.appendSubText} />
+
+      ddItems = this.state.activeTopic.concat(this.state.inactiveTopic).map( function(topicName) {
+                return <button className="dropdown-item" type="button" key={topicName} value={topicName} onClick={self.handleTopicHeader}>{topicName}</button>
+              });
     } else {
       message = <div className="d-flex justify-content-center">
-                  No subscribers available, please add one below..
+                  <span className="alert alert-primary">
+                    No subscribers available, please add one below
+                  </span>
                 </div>
 
+      ddItems = <button className="dropdown-item" type="button">Empty</button>
 
     }
+
 
     return(
       <div className="App container">
@@ -83,7 +196,7 @@ export default class View extends Component {
         <div className="row">
           <div className="col-6">
             <textarea className="form-control" id="subscriberText" rows="10"
-              readOnly value={this.state.subTextBox} />
+              readOnly value={this.state.pubTextBox} />
           </div>
 
           <div className="col-6">
@@ -96,7 +209,12 @@ export default class View extends Component {
         {message}
 
 
-        <AddRemoveTopics activeTopics={this.state.activeTopic}/>
+        <AddRemoveTopics activeTopics   = {this.state.activeTopic}
+                         inactiveTopics = {this.state.inactiveTopic}
+                         handleInactive = {this.handleInactive}
+                         handleActive   = {this.handleActive}
+                         handleMoveAllInactive = {this.handleMoveAllInactive}
+                         handleMoveAllActive   = {this.handleMoveAllActive} />
         <br />
 
         <div className="row">
@@ -108,15 +226,14 @@ export default class View extends Component {
           </div>
           <div className="input-group mb-3 col-6">
             <div className="input-group-prepend">
-              <button className="btn btn-outline-secondary dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Topic</button>
+              <button className="btn btn-outline-secondary dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">{this.state.ddTopic}</button>
               <div className="dropdown-menu">
-                <a className="dropdown-item" href="#">Action</a>
-                <a className="dropdown-item" href="#">Action2</a>
+                {ddItems}
               </div>
             </div>
-            <input className="form-control" type="text" onChange={this.handleTopic} value={this.state.topicInput}/>
+            <input className="form-control" type="text" onChange={this.handleMsg} value={this.state.msgInput}/>
             <div className="input-group-append">
-              <button className="btn btn-primary" onClick={this.addTopic}> Send </button>
+              <button className="btn btn-primary" onClick={this.addMsg}> Send </button>
             </div>
           </div>
           <div className="input-group mb-3 col-6">
