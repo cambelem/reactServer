@@ -1,18 +1,10 @@
 import React, { Component } from "react";
-//import { Connector } from 'mqtt-react';
-//import PostMqtt from './components/PostMessage.jsx';
-//import SubMqtt from './components/MessageList.jsx';
-
-// import _MessageContainer from './components/MessageContainer.jsx';
+import mqtt from 'mqtt';
 import StartMessage from './components/StartMessage'
 import AddRemoveTopics from './components/AddRemoveTopics'
 
-// import {subscribe} from 'mqtt-react';
-import mqtt from 'mqtt';
+let topicJsonData = require('./topics.json');
 
-// client.on('message', function(){
-//   client.subscribe("webClient");
-// })
 
 export default class View extends Component {
   constructor(){
@@ -26,6 +18,7 @@ export default class View extends Component {
                   ddTopic: "Topic",
                   client: mqtt.connect('ws://localhost:9001')}
 
+    this.loadJSON = this.loadJSON.bind(this)
     this.handleTopic = this.handleTopic.bind(this)
     this.handleMsg = this.handleMsg.bind(this)
     this.addTopic = this.addTopic.bind(this)
@@ -37,8 +30,17 @@ export default class View extends Component {
     this.handleActive = this.handleActive.bind(this)
     this.handleMoveAllInactive = this.handleMoveAllInactive.bind(this)
     this.handleMoveAllActive = this.handleMoveAllActive.bind(this)
+
+    this.downloadLog = this.downloadLog.bind(this)
   }
 
+  componentDidMount() {
+    this.loadJSON()
+  }
+
+  loadJSON() {
+    this.setState({activeTopic: topicJsonData})
+  }
 
   handleTopic(e) {
     this.setState({topicInput: e.target.value})
@@ -161,6 +163,14 @@ export default class View extends Component {
                   })
   }
 
+  downloadLog() {
+    var element = document.createElement("a");
+    var file = new Blob([this.state.subTextBox], {type: 'text/plain'});
+    element.href = URL.createObjectURL(file);
+    element.download = "LogFile.txt";
+    element.click();
+  }
+
   render(){
     let message, ddItems
 
@@ -186,8 +196,11 @@ export default class View extends Component {
     return(
       <div className="App container">
         <div className="row">
-          <div className="col-12">
-          <h1> Mqtt React Web Client </h1>
+          <div className="col-6">
+            <h1>  Mqtt React Web Client </h1>
+          </div>
+          <div className="col-6 d-flex align-items-center">
+            <button type="button" className="btn btn-outline-success ml-auto" onClick={this.downloadLog}>Download Sub Log</button>
           </div>
         </div>
 
@@ -195,11 +208,13 @@ export default class View extends Component {
 
         <div className="row">
           <div className="col-6">
+            <label>Publisher Log</label>
             <textarea className="form-control" id="subscriberText" rows="10"
               readOnly value={this.state.pubTextBox} />
           </div>
 
           <div className="col-6">
+            <label>Subscriber Log</label>
             <textarea className="form-control" id="subscriberText" rows="10"
               readOnly value={this.state.subTextBox} />
           </div>
