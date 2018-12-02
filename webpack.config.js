@@ -1,12 +1,17 @@
 var HTMLWebpackPlugin = require('html-webpack-plugin');
 var HTMLWebpackPluginConfig = new HTMLWebpackPlugin({
-  template: __dirname + '/index.html',
+  template: __dirname + '/public/index.html',
   filename: 'index.html',
   inject: 'body'
 });
 
+
 module.exports = {
-  entry: __dirname + '/app/index.jsx',
+  devServer: {
+    port: 8080,
+    proxy: { "/api/**": { target: 'http://localhost:3001', secure: false }}
+  },
+  entry: __dirname + '/src/client/index.jsx',
   resolve: {
         // Add '.ts' and '.tsx' as resolvable extensions.
         extensions: [".ts", ".tsx", ".js", ".json", ".jsx"]
@@ -31,8 +36,8 @@ module.exports = {
     ]
   },
   output: {
-    filename: 'transformed.js',
-    path: __dirname + '/build'
+    filename: 'bundle.js',
+    path: __dirname + '/dist',
   },
   plugins: [HTMLWebpackPluginConfig]
 };
