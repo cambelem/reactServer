@@ -1,5 +1,7 @@
 const contests = require('../controllers/contests.server.controller');
 
+// This is how you would create routes in Express
+// This is not being used!
 module.exports = function(app) {
     app.route('/api/contests')
         .post(contests.create)

@@ -59,10 +59,10 @@ router.delete("/deleteData", (req, res) => {
 
   fs.readFile(fileName, 'utf-8', function(err, data){
     if (err) return res.json({success: false, error: err });
-    
+
     var topics = JSON.parse(data);
     var index = topics.indexOf(topicName.topic);
-    
+
     if (index > -1) {
       topics.splice(index, 1);
     }
@@ -74,27 +74,27 @@ router.delete("/deleteData", (req, res) => {
   });
 });
 
-// this is our create methid
+// this is our create method
 // this method adds new data in our database
 router.post("/putData", (req, res) => {
   var fileName = __dirname + '/../data/topics.json';
-  
+
   const topicName = req.body;
 
   fs.readFile(fileName, 'utf-8', function(err, data){
     if (err) return res.json({success: false, error: err });
-    
+
     var topics = JSON.parse(data);
     topics.push(topicName.topic);
-    
- 
+
+
     fs.writeFile(fileName, JSON.stringify(topics), 'utf-8', function(err) {
       if (err) return res.json({success: false, error: err });
       return res.json({ success: true });
     })
   });
-  
-  
+
+
 });
 
 // append /api for our http requests
