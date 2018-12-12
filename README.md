@@ -10,7 +10,7 @@ Please note that MongoDB is not active within the project. The user must set thi
 
 `npm install`
 
-`npm dev`
+`npm run dev`
 
 ## Author
 - Eric C. - <https://github.com/cambelem>
